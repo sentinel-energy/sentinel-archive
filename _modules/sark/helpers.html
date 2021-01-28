@@ -1,0 +1,209 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sark.helpers &#8212; SENTINEL archive 0.1.dev0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for sark.helpers</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Helpers</span>
+<span class="sd">-------</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">importlib</span> <span class="kn">import</span> <span class="n">import_module</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">from</span> <span class="nn">glom</span> <span class="kn">import</span> <span class="n">Check</span><span class="p">,</span> <span class="n">Match</span><span class="p">,</span> <span class="n">SKIP</span>
+
+
+<span class="k">def</span> <span class="nf">import_from</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">import_module</span><span class="p">(</span><span class="n">module</span><span class="p">),</span> <span class="n">name</span><span class="p">)</span>
+
+
+<span class="c1"># def from_hints(fn: Callable, arg: str) -&gt; Tuple:</span>
+<span class="c1">#     &quot;&quot;&quot;NOTE: Comment out until we drop 3.7&quot;&quot;&quot;</span>
+<span class="c1">#     from typing import get_args, get_origin, get_type_hints</span>
+
+<span class="c1">#     hint = get_type_hints(fn)[arg]</span>
+<span class="c1">#     return get_origin(hint), get_args(hint)</span>
+
+
+<div class="viewcode-block" id="flatten_list"><a class="viewcode-back" href="../../api/api.html#sark.helpers.flatten_list">[docs]</a><span class="k">def</span> <span class="nf">flatten_list</span><span class="p">(</span><span class="n">lst</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Flatten an arbitrarily nested list (returns a generator)&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">lst</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)):</span>
+            <span class="k">yield from</span> <span class="n">flatten_list</span><span class="p">(</span><span class="n">el</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">el</span></div>
+
+
+<div class="viewcode-block" id="select"><a class="viewcode-back" href="../../api/api.html#sark.helpers.select">[docs]</a><span class="k">def</span> <span class="nf">select</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Wrap ``glom.Check`` with the default action set to ``glom.SKIP``.</span>
+
+<span class="sd">    This is very useful to select items inside nested data structures.  A few</span>
+<span class="sd">    example uses:</span>
+
+<span class="sd">    &gt;&gt;&gt; from glom import glom</span>
+<span class="sd">    &gt;&gt;&gt; cols = [</span>
+<span class="sd">    ...     {</span>
+<span class="sd">    ...         &quot;name&quot;: &quot;abc&quot;,</span>
+<span class="sd">    ...         &quot;type&quot;: &quot;integer&quot;</span>
+<span class="sd">    ...     },</span>
+<span class="sd">    ...     {</span>
+<span class="sd">    ...         &quot;name&quot;: &quot;def&quot;,</span>
+<span class="sd">    ...         &quot;type&quot;: &quot;string&quot;</span>
+<span class="sd">    ...     },</span>
+<span class="sd">    ... ]</span>
+<span class="sd">    &gt;&gt;&gt; glom(cols, [select(&quot;name&quot;, equal_to=&quot;abc&quot;)])</span>
+<span class="sd">    [{&quot;name&quot;: &quot;abc&quot;, &quot;type&quot;: &quot;integer&quot;}]</span>
+
+<span class="sd">    For details see: `glom.Check`_</span>
+
+<span class="sd">    .. _glom.Check: https://glom.readthedocs.io/en/latest/matching.html#validation-with-check</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Check</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">SKIP</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="match"><a class="viewcode-back" href="../../api/api.html#sark.helpers.match">[docs]</a><span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Wrap ``glom.Match`` with the default action set to ``glom.SKIP``.</span>
+
+<span class="sd">    This is very useful to match items inside nested data structures.  A few</span>
+<span class="sd">    example uses:</span>
+
+<span class="sd">    &gt;&gt;&gt; from glom import glom</span>
+<span class="sd">    &gt;&gt;&gt; cols = [</span>
+<span class="sd">    ...     {</span>
+<span class="sd">    ...         &quot;name&quot;: &quot;abc&quot;,</span>
+<span class="sd">    ...         &quot;type&quot;: &quot;integer&quot;,</span>
+<span class="sd">    ...         &quot;constraints&quot;: {&quot;enum&quot;: []}</span>
+<span class="sd">    ...     },</span>
+<span class="sd">    ...     {</span>
+<span class="sd">    ...         &quot;name&quot;: &quot;def&quot;,</span>
+<span class="sd">    ...         &quot;type&quot;: &quot;string&quot;</span>
+<span class="sd">    ...     },</span>
+<span class="sd">    ... ]</span>
+<span class="sd">    &gt;&gt;&gt; glom(cols, [match({&quot;constraints&quot;: {&quot;enum&quot;: list}, str: str})])</span>
+<span class="sd">    [{&quot;name&quot;: &quot;abc&quot;, &quot;type&quot;: &quot;integer&quot;, &quot;constraints&quot;: {&quot;enum&quot;: []}}]</span>
+
+<span class="sd">    For details see: `glom.Match`_</span>
+
+<span class="sd">    .. _glom.Match: https://glom.readthedocs.io/en/latest/matching.html#validation-with-match</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">SKIP</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<span class="n">consume</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">deque</span><span class="p">,</span> <span class="n">maxlen</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">consume</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="s2">&quot;Consume or exhaust an iterator&quot;</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">SENTINEL archive</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">The SENTINEL archive data format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hands-on.html">Using a <code class="docutils literal notranslate"><span class="pre">datapackage</span></code> from Python</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/metadata.html#schema">Schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/archive.html">Persistence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/pandas.html">Reading as a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html">Metadata tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html#module-sark.dpkg">Datapackage tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html#module-sark.tseries">Time series API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html#module-sark.validate">Validation functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html#module-sark.io">Internal interfaces</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, SENTINEL collaboration.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

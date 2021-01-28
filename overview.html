@@ -1,0 +1,188 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The SENTINEL archive data format &#8212; SENTINEL archive 0.1.dev0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/css/custom.css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Using a datapackage from Python" href="hands-on.html" />
+    <link rel="prev" title="Welcome to SENTINEL archive’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="the-sentinel-archive-data-format">
+<h1>The SENTINEL archive data format<a class="headerlink" href="#the-sentinel-archive-data-format" title="Permalink to this headline">¶</a></h1>
+<p>The SENTINEL partners work with a variety of models in diverse
+computing environments.  The <strong>SENTINEL archive</strong> data format <a class="footnote-reference brackets" href="#id2" id="id1">1</a> has
+been chosen to facilitate interoperability between these diverse
+modelling frameworks by making sharing of data easier.  Since we have
+to cope with a variety of research requirements, and workflows, the
+format is fairly flexible, and to a great extent self-descriptive.  We
+rely on the author of a dataset to also describe it.  A typical
+description of a dataset includes both metadata and structural
+information.</p>
+<p>Metadata of a dataset typically establishes the context for the
+dataset.  It can consist of properties like:</p>
+<ul class="simple">
+<li><p>a computer program friendly nameso that they can be referred to
+easily from software,</p></li>
+<li><p>a title and free-form descriptive text so that other researchers
+using the dataset are aware of its provenance and use it correctly,</p></li>
+<li><p>search keywords for easier discoverability on online platforms,</p></li>
+<li><p>license information so that others know the terms of use of the
+data, and</p></li>
+<li><p>citation information.</p></li>
+</ul>
+<p>Whereas structural information should describe the type information,
+any contraints, and assumptions implicit in the data.  Our
+implementation builds on top of the <em>frictionless datapackage</em>
+specification.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id2"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p>We use the term “data format” to refer to the general structure
+of the data, and its metadata, instead of a specific file type
+like <em>CSV</em>, <em>Excel</em>, etc.</p>
+</dd>
+</dl>
+<div class="section" id="what-is-a-datapackage">
+<h2>What is a <code class="docutils literal notranslate"><span class="pre">datapackage</span></code>?<a class="headerlink" href="#what-is-a-datapackage" title="Permalink to this headline">¶</a></h2>
+<p>A datapackage consists of a set of data files, any related source
+code, relevant licenses, and the <code class="docutils literal notranslate"><span class="pre">datapackage.json</span></code> file, that
+records all this information in a single place.  It is based on a
+widely recognised standard called <em>frictionless data</em>; further detals
+of the specification can be found on their <a class="reference external" href="https://specs.frictionlessdata.io/">website</a>.  This file also
+includes specific information about the structure of each dataset (or
+<em>data resource</em>).  A data resource can be any kind of file, like
+<em>CSV</em>, <em>Excel</em>, etc.  At the moment, only tabular resources are
+supported.  Each data resource has an entry which states its name,
+relative path, and structure (or <em>schema</em>) of the data within it.
+Structural information includes column names, the type of data stored
+in each column, instructions on how to identify missing values, or how
+to uniquely identify each row in a dataset (otherwise known as
+“primary key”).  Since data can often be large, it is possible to
+split the schema into a separate file and include it from
+<code class="docutils literal notranslate"><span class="pre">datapackage.json</span></code> so as to keep it manageable and easy to work
+with.</p>
+<p>We provide a web-based user interface (web UI) and a Python API to
+create datasets.  The web UI is meant to be easy to use, and requires
+no programming knowledge, whereas the Python API is more fully
+featured and requires some understanding of the scientific Python
+ecosystem.  At the moment there is no direct support for other
+languages, but the frictionless data specification provides some
+alternate implementations of the datapackage format which maybe used.
+However, since the underlying design uses commonly used facilities,
+e.g. using <em>JSON</em> for metadata, and relying on well established file
+formats; adding support in other languages is a matter of allocating
+resources.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">SENTINEL archive</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The SENTINEL archive data format</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#what-is-a-datapackage">What is a <code class="docutils literal notranslate"><span class="pre">datapackage</span></code>?</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="hands-on.html">Using a <code class="docutils literal notranslate"><span class="pre">datapackage</span></code> from Python</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/metadata.html#schema">Schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/archive.html">Persistence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/pandas.html">Reading as a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/api.html">Metadata tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/api.html#module-sark.dpkg">Datapackage tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/api.html#module-sark.tseries">Time series API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/api.html#module-sark.validate">Validation functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/api.html#module-sark.io">Internal interfaces</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to SENTINEL archive’s documentation!</a></li>
+      <li>Next: <a href="hands-on.html" title="next chapter">Using a <code class="docutils literal notranslate"><span class="pre">datapackage</span></code> from Python</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, SENTINEL collaboration.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/overview.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

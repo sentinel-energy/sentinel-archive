@@ -1,0 +1,1063 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Metadata tools &#8212; SENTINEL archive 0.1.dev0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Reading as a pandas.DataFrame" href="../tutorial/pandas.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="contents topic" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#module-sark.metatools" id="id1">Metadata tools</a></p></li>
+<li><p><a class="reference internal" href="#module-sark.dpkg" id="id2">Datapackage tools</a></p></li>
+<li><p><a class="reference internal" href="#module-sark.tseries" id="id3">Time series API</a></p></li>
+<li><p><a class="reference internal" href="#module-sark.validate" id="id4">Validation functions</a></p></li>
+<li><p><a class="reference internal" href="#module-sark.io" id="id5">Internal interfaces</a></p>
+<ul>
+<li><p><a class="reference internal" href="#i-o" id="id6">I/O</a></p></li>
+<li><p><a class="reference internal" href="#helpers" id="id7">Helpers</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>Technical documentation of functions and classes provided by the
+different <code class="docutils literal notranslate"><span class="pre">sark</span></code> modules.</p>
+<div class="section" id="module-sark.metatools">
+<span id="metadata-tools"></span><h1><a class="toc-backref" href="#id1">Metadata tools</a><a class="headerlink" href="#module-sark.metatools" title="Permalink to this headline">¶</a></h1>
+<p>Metadata tools</p>
+<dl class="py function">
+<dt id="sark.metatools.check_license">
+<code class="sig-prename descclassname">sark.metatools.</code><code class="sig-name descname">check_license</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lic</span><span class="p">:</span> <span class="n">Dict<span class="p">[</span>str<span class="p">, </span>str<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; Dict<span class="p">[</span>str<span class="p">, </span>str<span class="p">]</span><a class="reference internal" href="../_modules/sark/metatools.html#check_license"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.metatools.check_license" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the license spec from the metadata</p>
+<p>Issue a warning if the license is old.  TODO: add other recommendations</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>lic</strong><span class="classifier">Dict[str, str], alias _license_t</span></dt><dd><p>License metadata dictionary (as returned by the Open Definition
+License Service)
+Example: CC-BY-SA:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;domain_content&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+  <span class="s2">&quot;domain_data&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+  <span class="s2">&quot;domain_software&quot;</span><span class="p">:</span> <span class="n">false</span><span class="p">,</span>
+  <span class="s2">&quot;family&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;CC-BY-SA-4.0&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;maintainer&quot;</span><span class="p">:</span> <span class="s2">&quot;Creative Commons&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;od_conformance&quot;</span><span class="p">:</span> <span class="s2">&quot;approved&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;osd_conformance&quot;</span><span class="p">:</span> <span class="s2">&quot;not reviewed&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;active&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Creative Commons Attribution Share-Alike 4.0&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;https://creativecommons.org/licenses/by-sa/4.0/&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.metatools.get_license">
+<code class="sig-prename descclassname">sark.metatools.</code><code class="sig-name descname">get_license</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lic</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">group</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">'all'</span></em><span class="sig-paren">)</span> &#x2192; Dict<span class="p">[</span>str<span class="p">, </span>str<span class="p">]</span><a class="reference internal" href="../_modules/sark/metatools.html#get_license"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.metatools.get_license" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the license metadata</p>
+<p>Retrieve the license metadata of the requested group from the Open
+Definition License Service and cache it in a temporary file.  From the
+retrieved list, find the requested license and return it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>lic</strong><span class="classifier">str or None</span></dt><dd><p>Requested license; if None, interactively ask for the license name</p>
+</dd>
+<dt><strong>group</strong><span class="classifier">{‘all’, ‘osi’, ‘od’, ‘ckan’}</span></dt><dd><p>License group where to find the license</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Dict[str, str], alias _license_t</dt><dd><p>A dictionary with the license metadata</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If the license group is incorrect</p>
+</dd>
+<dt>KeyError</dt><dd><p>If the license cannot be found in the provided group</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.metatools.list_licenses">
+<code class="sig-prename descclassname">sark.metatools.</code><code class="sig-name descname">list_licenses</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">group</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">'all'</span></em><span class="sig-paren">)</span> &#x2192; List<span class="p">[</span>str<span class="p">]</span><a class="reference internal" href="../_modules/sark/metatools.html#list_licenses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.metatools.list_licenses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return list of valid licenses</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sark.dpkg">
+<span id="datapackage-tools"></span><h1><a class="toc-backref" href="#id2">Datapackage tools</a><a class="headerlink" href="#module-sark.dpkg" title="Permalink to this headline">¶</a></h1>
+<p>Datapackage</p>
+<dl class="py function">
+<dt id="sark.dpkg.create_pkg">
+<code class="sig-prename descclassname">sark.dpkg.</code><code class="sig-name descname">create_pkg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span></em>, <em class="sig-param"><span class="n">resources</span><span class="p">:</span> <span class="n">Iterable<span class="p">[</span>Union<span class="p">[</span>str<span class="p">, </span>pathlib.Path<span class="p">]</span><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">base_path</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>str<span class="p">, </span>pathlib.Path<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sark/dpkg.html#create_pkg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.dpkg.create_pkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a datapackage from metadata and resources.</p>
+<p>If <cite>resources</cite> point to files that exist, their schema are inferred and
+added to the package.  If <cite>base_path</cite> is a non empty string, it is treated
+as the parent directory, and all resource file paths are checked relative
+to it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>meta</strong><span class="classifier">Dict</span></dt><dd><p>A dictionary with package metadata.</p>
+</dd>
+<dt><strong>resources</strong><span class="classifier">Iterable[Union[str, Path]]</span></dt><dd><p>An iterator over different resources.  Resources are paths to files,
+relative to <cite>base_path</cite>.</p>
+</dd>
+<dt><strong>base_path</strong><span class="classifier">str (default: empty string)</span></dt><dd><p>Directory where the package files are located</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Package</dt><dd><p>A datapackage with inferred schema for all the package resources</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.dpkg.idxpath_from_pkgpath">
+<code class="sig-prename descclassname">sark.dpkg.</code><code class="sig-name descname">idxpath_from_pkgpath</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkgpath</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>str<span class="p">, </span>pathlib.Path<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; Union<span class="p">[</span>str<span class="p">, </span>pathlib.Path<span class="p">]</span><a class="reference internal" href="../_modules/sark/dpkg.html#idxpath_from_pkgpath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.dpkg.idxpath_from_pkgpath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a valid index path given a package path</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>pkgpath</strong><span class="classifier">Union[str, Path]</span></dt><dd><p>Path to package directory</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Union[str, Path]</dt><dd><ul class="simple">
+<li><p>Returns a valid index path; if there are multiple matches, returns
+the lexicographically first match</p></li>
+<li><p>If an index file is not found, returns an empty string</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<dl class="simple">
+<dt>RuntimeWarning</dt><dd><ul class="simple">
+<li><p>Warns if no index file is not found</p></li>
+<li><p>Warns if multiple index files are found</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.dpkg.index_levels">
+<code class="sig-prename descclassname">sark.dpkg.</code><code class="sig-name descname">index_levels</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">_file</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>str<span class="p">, </span>pathlib.Path<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">idxcols</span><span class="p">:</span> <span class="n">Iterable<span class="p">[</span>str<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; Tuple<span class="p">[</span>Union<span class="p">[</span>str<span class="p">, </span>pathlib.Path<span class="p">]</span><span class="p">, </span>Dict<span class="p">]</span><a class="reference internal" href="../_modules/sark/dpkg.html#index_levels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.dpkg.index_levels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a dataset and determine the index levels</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>_file</strong><span class="classifier">Union[str, Path]</span></dt><dd><p>Path to the dataset</p>
+</dd>
+<dt><strong>idxcols</strong><span class="classifier">Iterable[str]</span></dt><dd><p>List of columns in the dataset that constitute the index</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt>Tuple[str, Dict]</dt><dd><p>Tuple of path to the dataset, and the schema of each column as a dictionary.
+If <cite>idxcols</cite> was [“foo”, “bar”], the dictionary might look like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;foo&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;foo&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;datetime&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;default&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;bar&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;bar&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;constraints&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Note that the index columns that have categorical values, are filled in
+by reading the dataset and determining the full set of values.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.dpkg.pkg_from_files">
+<code class="sig-prename descclassname">sark.dpkg.</code><code class="sig-name descname">pkg_from_files</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span></em>, <em class="sig-param"><span class="n">idxpath</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>str<span class="p">, </span>pathlib.Path<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">fpaths</span><span class="p">:</span> <span class="n">Iterable<span class="p">[</span>Union<span class="p">[</span>str<span class="p">, </span>pathlib.Path<span class="p">]</span><span class="p">]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sark/dpkg.html#pkg_from_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.dpkg.pkg_from_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a package from an index file and other files</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>meta</strong><span class="classifier">Dict</span></dt><dd><p>A dictionary with package metadata.</p>
+</dd>
+<dt><strong>idxpath</strong><span class="classifier">Union[str, Path]</span></dt><dd><p>Path to the index file.  Note the index file has to be at the top level
+directory of the datapackage.  See <a class="reference internal" href="#sark.dpkg.read_pkg_index" title="sark.dpkg.read_pkg_index"><code class="xref py py-func docutils literal notranslate"><span class="pre">sark.dpkg.read_pkg_index()</span></code></a></p>
+</dd>
+<dt><strong>fpaths</strong><span class="classifier">List[Union[str, Path]]</span></dt><dd><p>A list of paths to datasets/resources not in the index.  If any of the
+paths point to a dataset already present in the index, it is ignored.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Tuple[Path, Package, pd.DataFrame]</dt><dd><p>A datapackage with inferred schema for the resources/datasets present
+in the index; all other resources are added with a basic inferred
+schema.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.dpkg.pkg_from_index">
+<code class="sig-prename descclassname">sark.dpkg.</code><code class="sig-name descname">pkg_from_index</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span></em>, <em class="sig-param"><span class="n">fpath</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>str<span class="p">, </span>pathlib.Path<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; Tuple<span class="p">[</span>pathlib.Path<span class="p">, </span>datapackage.Package<span class="p">, </span>pandas.DataFrame<span class="p">]</span><a class="reference internal" href="../_modules/sark/dpkg.html#pkg_from_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.dpkg.pkg_from_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read an index file, and create a datapackage with the provided metadata.</p>
+<p>The index can be in either YAML, or JSON format.  It is a list of dataset
+files, names, and a list of columns in the dataset that are to be treated
+as index columns (see example below)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>meta</strong><span class="classifier">Dict</span></dt><dd><p>Package metadata dictionary</p>
+</dd>
+<dt><strong>fpath</strong><span class="classifier">Union[str, Path]</span></dt><dd><p>Path to the index file.  Note the index file has to be at the top level
+directory of the datapackage.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Tuple[Path, Package, pandas.DataFrame]</dt><dd><p>The package directory, the <cite>Package</cite> object, and the index dataframe.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>YAML:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">yaml_f</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="gp">... </span><span class="s1">- file: file1</span>
+<span class="gp">... </span><span class="s1">  name: dst1</span>
+<span class="gp">... </span><span class="s1">  idxcols: [cola, colb]</span>
+<span class="gp">... </span><span class="s1">- file: file2</span>
+<span class="gp">... </span><span class="s1">  name: dst2</span>
+<span class="gp">... </span><span class="s1">  idxcols: [colx, coly, colz]</span>
+<span class="gp">... </span><span class="s1">- file: file3</span>
+<span class="gp">... </span><span class="s1">  name: dst3</span>
+<span class="gp">... </span><span class="s1">  idxcols: [col]</span>
+<span class="gp">... </span><span class="s1">&#39;&#39;&#39;</span>
+</pre></div>
+</div>
+<p>JSON:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">json_f</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="gp">... </span><span class="s1">[</span>
+<span class="gp">... </span><span class="s1">    {</span>
+<span class="gp">... </span><span class="s1">        &quot;file&quot;: &quot;file1&quot;,</span>
+<span class="gp">... </span><span class="s1">        &quot;name&quot;: &quot;dst1&quot;,</span>
+<span class="gp">... </span><span class="s1">        &quot;idxcols&quot;: [</span>
+<span class="gp">... </span><span class="s1">            &quot;cola&quot;,</span>
+<span class="gp">... </span><span class="s1">            &quot;colb&quot;</span>
+<span class="gp">... </span><span class="s1">        ]</span>
+<span class="gp">... </span><span class="s1">    },</span>
+<span class="gp">... </span><span class="s1">    {</span>
+<span class="gp">... </span><span class="s1">        &quot;file&quot;: &quot;file2&quot;,</span>
+<span class="gp">... </span><span class="s1">        &quot;name&quot;: &quot;dst2&quot;,</span>
+<span class="gp">... </span><span class="s1">        &quot;idxcols&quot;: [</span>
+<span class="gp">... </span><span class="s1">            &quot;colx&quot;,</span>
+<span class="gp">... </span><span class="s1">            &quot;coly&quot;,</span>
+<span class="gp">... </span><span class="s1">            &quot;colz&quot;</span>
+<span class="gp">... </span><span class="s1">        ]</span>
+<span class="gp">... </span><span class="s1">    },</span>
+<span class="gp">... </span><span class="s1">    {</span>
+<span class="gp">... </span><span class="s1">        &quot;file&quot;: &quot;file3&quot;,</span>
+<span class="gp">... </span><span class="s1">        &quot;name&quot;: &quot;dst3&quot;,</span>
+<span class="gp">... </span><span class="s1">        &quot;idxcols&quot;: [</span>
+<span class="gp">... </span><span class="s1">            &quot;col&quot;</span>
+<span class="gp">... </span><span class="s1">        ]</span>
+<span class="gp">... </span><span class="s1">    }</span>
+<span class="gp">... </span><span class="s1">]</span>
+<span class="gp">... </span><span class="s1">&#39;&#39;&#39;</span>
+</pre></div>
+</div>
+<p>Index as read from the example above:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">idx</span> <span class="o">=</span> <span class="n">read_pkg_index</span><span class="p">(</span><span class="s2">&quot;testing/files/indices/index.json&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">idx</span>
+<span class="go">     file  name             idxcols</span>
+<span class="go">0   file1  dst1        (cola, colb)</span>
+<span class="go">1   file2  dst2  (colx, coly, colz)</span>
+<span class="go">2   file3  dst3              (col,)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.dpkg.pkg_glossary">
+<code class="sig-prename descclassname">sark.dpkg.</code><code class="sig-name descname">pkg_glossary</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span><span class="p">:</span> <span class="n">datapackage.Package</span></em>, <em class="sig-param"><span class="n">idx</span><span class="p">:</span> <span class="n">pandas.DataFrame</span></em><span class="sig-paren">)</span> &#x2192; pandas.DataFrame<a class="reference internal" href="../_modules/sark/dpkg.html#pkg_glossary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.dpkg.pkg_glossary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate glossary from the package and the package index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>pkg</strong><span class="classifier">Package</span></dt><dd></dd>
+<dt><strong>idx</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>The index dataframe</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>The glossary as dataframe</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.dpkg.read_pkg">
+<code class="sig-prename descclassname">sark.dpkg.</code><code class="sig-name descname">read_pkg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg_path</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>str<span class="p">, </span>pathlib.Path<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">extract_dir</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>Union<span class="p">[</span>str<span class="p">, </span>pathlib.Path<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sark/dpkg.html#read_pkg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.dpkg.read_pkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a  datapackage</p>
+<p>If <cite>pkg_path</cite> points to a <cite>datapackage.json</cite> file, read it as is.  If it
+points to a zip archive.  The archive is first extracted before opening it.
+If <cite>extract_dir</cite> is not provided, the current directory of the zip archive
+is used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>pkg_path</strong><span class="classifier">Union[str, Path]</span></dt><dd><p>Path to the <cite>datapackage.json</cite> file, or a zip archive</p>
+</dd>
+<dt><strong>extract_dir</strong><span class="classifier">Union[str, Path]</span></dt><dd><p>Path to which the zip archive is extracted</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Package</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.dpkg.read_pkg_index">
+<code class="sig-prename descclassname">sark.dpkg.</code><code class="sig-name descname">read_pkg_index</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fpath</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>str<span class="p">, </span>pathlib.Path<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; pandas.DataFrame<a class="reference internal" href="../_modules/sark/dpkg.html#read_pkg_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.dpkg.read_pkg_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the index of files incuded in the datapackage</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>fpath</strong><span class="classifier">Union[str, Path]</span></dt><dd><p>Index file path or a stream object</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>A dataframe with the columns: ‘file’, ‘name’, and ‘idxcols’; ‘idxcols’
+is a tuple.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If the file type is correct (YAML/JSON), but does not return a list</p>
+</dd>
+<dt>RuntimeError</dt><dd><p>If the file has an unknown extension (raised by <code class="xref py py-func docutils literal notranslate"><span class="pre">sark.io.dwim_file()</span></code>)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.dpkg.registry">
+<code class="sig-prename descclassname">sark.dpkg.</code><code class="sig-name descname">registry</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">col</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">col_t</span><span class="p">:</span> <span class="n">str</span></em><span class="sig-paren">)</span> &#x2192; Dict<a class="reference internal" href="../_modules/sark/dpkg.html#registry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.dpkg.registry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the column schema from column schema registry: <cite>sark_registry</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>col</strong><span class="classifier">str</span></dt><dd><p>Column name to look for</p>
+</dd>
+<dt><strong>col_t</strong><span class="classifier">Literal[“cols”, “idxcols”]</span></dt><dd><p>A literal string specifying the kind of column; one of: “cols”, or “idxcols”</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Dict</dt><dd><p>Column schema; an empty dictionary is returned in case there are no matches</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>RuntimeError</dt><dd><p>When more than one matches are found</p>
+</dd>
+<dt>ValueError</dt><dd><p>When the schema file in the registry is unsupported; not one of: JSON, or YAML</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.dpkg.update_pkg">
+<code class="sig-prename descclassname">sark.dpkg.</code><code class="sig-name descname">update_pkg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span><span class="p">:</span> <span class="n">datapackage.Package</span></em>, <em class="sig-param"><span class="n">resource</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">schema_update</span><span class="p">:</span> <span class="n">Dict</span></em>, <em class="sig-param"><span class="n">fields</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sark/dpkg.html#update_pkg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.dpkg.update_pkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update package resource schema</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>pkg</strong><span class="classifier">Package</span></dt><dd><p>Package object</p>
+</dd>
+<dt><strong>resource</strong><span class="classifier">str</span></dt><dd><p>Resource name FIXME: cannot handle duplicate names in subdirectories</p>
+</dd>
+<dt><strong>schema_update</strong><span class="classifier">Dict</span></dt><dd><p>Updated fields in the schema, if <cite>field</cite> is <cite>False</cite>, can be used to
+update <cite>missingValues</cite>, or <cite>primaryKey</cite>.  When updating the schema, it
+looks like this (‘foo’/’bar’ are names of the fields being updated):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;foo&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;foo&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;datetime&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;default&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;bar&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;bar&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;default&quot;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+<dt><strong>fields</strong><span class="classifier">bool (default: True)</span></dt><dd><p>If the schema update is a field, or not</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>bool</dt><dd><p>Return the <cite>Package.valid</cite> flag; <cite>True</cite> if the update was valid.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.dpkg.write_pkg">
+<code class="sig-prename descclassname">sark.dpkg.</code><code class="sig-name descname">write_pkg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span><span class="p">:</span> <span class="n">datapackage.Package</span></em>, <em class="sig-param"><span class="n">pkgdir</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>str<span class="p">, </span>pathlib.Path<span class="p">]</span></span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">idx</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>pandas.DataFrame<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">glossary</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>pandas.DataFrame<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; List<span class="p">[</span>pathlib.Path<span class="p">]</span><a class="reference internal" href="../_modules/sark/dpkg.html#write_pkg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.dpkg.write_pkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a data package to path</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>pkg: Package</strong></dt><dd><p>Package object</p>
+</dd>
+<dt><strong>pkgdir: Union[str, Path]</strong></dt><dd><p>Path to write to</p>
+</dd>
+<dt><strong>idx</strong><span class="classifier">pandas.DataFrame (optional)</span></dt><dd><p>Package index written to <cite>pkgdir/index.json</cite></p>
+</dd>
+<dt><strong>glossary</strong><span class="classifier">pandas.DataFrame (optional)</span></dt><dd><p>Package glossary written to <cite>pkgdir/glossary.json</cite></p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>List[Path]</dt><dd><p>List of files written to disk</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sark.tseries">
+<span id="time-series-api"></span><h1><a class="toc-backref" href="#id3">Time series API</a><a class="headerlink" href="#module-sark.tseries" title="Permalink to this headline">¶</a></h1>
+<dl class="py function">
+<dt id="sark.tseries.from_multicol">
+<code class="sig-prename descclassname">sark.tseries.</code><code class="sig-name descname">from_multicol</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fpath</span><span class="p">:</span> <span class="n">_file_t</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">date_cols</span><span class="p">:</span> <span class="n">List<span class="p">[</span>_col_t<span class="p">]</span></span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sark/tseries.html#from_multicol"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.tseries.from_multicol" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a time series where datetime values are in multiple columns.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#sark.tseries.read_timeseries" title="sark.tseries.read_timeseries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_timeseries</span></code></a></dt><dd><p>see for full documentation, main entrypoint for users</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.tseries.from_table">
+<code class="sig-prename descclassname">sark.tseries.</code><code class="sig-name descname">from_table</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fpath</span><span class="p">:</span> <span class="n">_file_t</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">col_units</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">zero_idx</span><span class="p">:</span> <span class="n">bool</span></em>, <em class="sig-param"><span class="n">row_fmt</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">''</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sark/tseries.html#from_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.tseries.from_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a time series from a tabular file.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#sark.tseries.read_timeseries" title="sark.tseries.read_timeseries"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_timeseries</span></code></a></dt><dd><p>see for full documentation, main entrypoint for users</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.tseries.read_timeseries">
+<code class="sig-prename descclassname">sark.tseries.</code><code class="sig-name descname">read_timeseries</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fpath</span><span class="p">:</span> <span class="n">_file_t</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">date_cols</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>List<span class="p">[</span>_col_t<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">col_units</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">zero_idx</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">False</span></em>, <em class="sig-param"><span class="n">row_fmt</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">''</span></em>, <em class="sig-param"><span class="n">source_t</span><span class="p">:</span> <span class="n">str</span> <span class="o">=</span> <span class="default_value">''</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sark/tseries.html#read_timeseries"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.tseries.read_timeseries" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a time series from a file.</p>
+<p>While the natural way to structure a time series dataset is with the index
+column as datetime values, with subsequent columns holding other values,
+there are a few other frequently used structures.</p>
+<p>The first is to structure it as a table:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 37%" />
+<col style="width: 10%" />
+<col style="width: 10%" />
+<col style="width: 17%" />
+<col style="width: 13%" />
+<col style="width: 13%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>date</p></th>
+<th class="head"><p>1</p></th>
+<th class="head"><p>2</p></th>
+<th class="head"><p>…</p></th>
+<th class="head"><p>23</p></th>
+<th class="head"><p>24</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1/1/2016</p></td>
+<td><p>0</p></td>
+<td><p>10</p></td>
+<td><p>…</p></td>
+<td><p>2.3</p></td>
+<td><p>5.1</p></td>
+</tr>
+<tr class="row-odd"><td><p>4/1/2016</p></td>
+<td><p>3</p></td>
+<td><p>11</p></td>
+<td><p>…</p></td>
+<td><p>4.3</p></td>
+<td><p>9.1</p></td>
+</tr>
+</tbody>
+</table>
+<p>When <cite>source_t</cite> is set to “table”, this function reads a tabular dataset
+like the one above, and flattens it into a series, and sets the appropriate
+datetime values as their index.</p>
+<p>The other common structure is to split the datetime values into multiple
+columns in the table:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 38%" />
+<col style="width: 21%" />
+<col style="width: 21%" />
+<col style="width: 21%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>date</p></th>
+<th class="head"><p>time</p></th>
+<th class="head"><p>col1</p></th>
+<th class="head"><p>col2</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1/1/2016</p></td>
+<td><p>10:00</p></td>
+<td><p>42.0</p></td>
+<td><p>foo</p></td>
+</tr>
+<tr class="row-odd"><td><p>4/1/2016</p></td>
+<td><p>11:00</p></td>
+<td><p>3.14</p></td>
+<td><p>bar</p></td>
+</tr>
+</tbody>
+</table>
+<p>When <cite>source_t</cite> is set to “multicol”, as the table is read, the indicated
+columns are combined to construct the datetime values, which are then set
+as the index.</p>
+<p>If <cite>source_t</cite> is not specified (or set to an empty string), options
+specific to this function are ignored, and all other keyword options are
+passed on to the backend transparently; in case of reading a CSV with
+Pandas, that means all valid keywords for <cite>pandas.read_csv</cite> are accepted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>fpath</strong><span class="classifier">Union[str, Path, TextIO]</span></dt><dd><p>Path to the dataset file</p>
+</dd>
+<dt><strong>date_cols</strong><span class="classifier">List[int, str] (for “multicol” mode)</span></dt><dd><p>List of columns to be combined to construct the datetime values</p>
+</dd>
+<dt><strong>col_units</strong><span class="classifier">str (for “table” mode)</span></dt><dd><p>Time units for the columns.  Accepted values: “month”, “hour”.</p>
+</dd>
+<dt><strong>zero_idx</strong><span class="classifier">bool (for “table” mode, default: False)</span></dt><dd><p>Whether the columns are zero indexed.  When the columns represent
+hours, or minutes, it is common to number them as nth hour.  Which
+means they are counted starting at 1 instead of 0.  Set this to False
+if that is the case.</p>
+</dd>
+<dt><strong>row_fmt</strong><span class="classifier">str (for “table” mode, default: empty string)</span></dt><dd><p>What is the format of the datetime column (use strftime format strings,
+see: <cite>man 3 strftime</cite>).  If this is left empty, the reader tries to
+guess a format using the <cite>dateutil</cite> module (Pandas default)</p>
+</dd>
+<dt><strong>source_t</strong><span class="classifier">str (default: empty string)</span></dt><dd><p>Mode of reading the data. Accepted values: “table”, “multicol”, or
+empty string</p>
+</dd>
+<dt><strong>**kwards</strong><span class="classifier">Dict</span></dt><dd><p>Other keyword arguments passed on to the reader backend.  Any options
+passed here takes precedence, and overwrites other values inferred from
+the earlier keyword arguments.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>ts</strong><span class="classifier">Series/DataFrame</span></dt><dd><p>The time series is returned as a series or a dataframe depending on the
+number of other columns that are present.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>To skip specific rows, maybe because they have bad data, or are empty, you
+may use the <cite>skiprows</cite> option.  It can be set to a list-like where the
+entries are row indices (numbers).</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">read_timeseries</span><span class="p">(</span><span class="s2">&quot;mydata.csv&quot;</span><span class="p">,</span> <span class="n">source_t</span><span class="o">=</span><span class="s2">&quot;table&quot;</span><span class="p">,</span> <span class="n">col_units</span><span class="o">=</span><span class="s2">&quot;hour&quot;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">skiprows</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">1522</span><span class="p">,</span> <span class="mi">5480</span><span class="p">))</span>  
+</pre></div>
+</div>
+<p>The above example skips rows 1522-5480.</p>
+<p>Similarly, data type of the column values can be controlled by using the
+<cite>dtype</cite> option.  When set to a <cite>numpy.dtype</cite>, all values will be read as
+that type, which is probably relevant for the “table” mode.  In the
+“multicol” mode, the types of the values can be controlled at the column
+level by setting it to a dictionary, where the key matches a column name,
+and the value is a valid <cite>numpy.dtype</cite>.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sark.validate">
+<span id="validation-functions"></span><h1><a class="toc-backref" href="#id4">Validation functions</a><a class="headerlink" href="#module-sark.validate" title="Permalink to this headline">¶</a></h1>
+<p>Data resource validation</p>
+<p>Tools to check if a data resource is consistent with its schema</p>
+<dl class="py function">
+<dt id="sark.validate.check_pkg">
+<code class="sig-prename descclassname">sark.validate.</code><code class="sig-name descname">check_pkg</code><span class="sig-paren">(</span><em class="sig-param">pkg</em>, <em class="sig-param">_filter: Callable = &lt;function &lt;lambda&gt;&gt;</em><span class="sig-paren">)</span> &#x2192; List<span class="p">[</span>Dict<span class="p">]</span><a class="reference internal" href="../_modules/sark/validate.html#check_pkg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.validate.check_pkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validate all resources in a datapackage</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>pkg</strong><span class="classifier">Package</span></dt><dd><p>The datapackage descriptor dictionary</p>
+</dd>
+<dt><strong>_filter</strong><span class="classifier">Callable</span></dt><dd><p>A predicate function that maybe passed to filter out data resources.
+The function is called with the data resource descriptor dictionary as
+argument, if it returns <cite>False</cite> the resource is skipped</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Dict</dt><dd><p>A dictionary with a summary of the validation checks.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.validate.check_schema">
+<code class="sig-prename descclassname">sark.validate.</code><code class="sig-name descname">check_schema</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ref</span><span class="p">:</span> <span class="n">Dict<span class="p">[</span>str<span class="p">, </span>str<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">dst</span><span class="p">:</span> <span class="n">Dict<span class="p">[</span>str<span class="p">, </span>str<span class="p">]</span></span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">remap</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>Dict<span class="p">[</span>str<span class="p">, </span>str<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; Tuple<span class="p">[</span>bool<span class="p">, </span>Set<span class="p">[</span>str<span class="p">]</span><span class="p">, </span>Dict<span class="p">[</span>str<span class="p">, </span>Tuple<span class="p">[</span>str<span class="p">, </span>str<span class="p">]</span><span class="p">]</span><span class="p">, </span>List<span class="p">[</span>Tuple<span class="p">]</span><span class="p">]</span><a class="reference internal" href="../_modules/sark/validate.html#check_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.validate.check_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compare a schema with a reference.</p>
+<p>The reference schema is a minimal set, meaning, any additional fields in
+the compared schema are accepted, but omissions are not.</p>
+<p>Name comparisons are case-sensitive.</p>
+<p>TODO: maybe also compare constraints?</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>ref</strong><span class="classifier">Dict[str, str]</span></dt><dd><p>Reference schema descriptor dictionary</p>
+</dd>
+<dt><strong>dst</strong><span class="classifier">Dict[str, str]</span></dt><dd><p>Schema descriptor dictionary from the dataset being validated</p>
+</dd>
+<dt><strong>remap</strong><span class="classifier">Dict[str, str] (optional)</span></dt><dd><p>Column/field names that are to be remapped before checking.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl>
+<dt><strong>result</strong><span class="classifier">Tuple[bool, Set[str], Dict[str, Tuple[str, str]], List[Tuple]]</span></dt><dd><p>Result tuple:</p>
+<ul>
+<li><p>Boolean flag indicating if it passed the checks or not</p></li>
+<li><p>If checks failed, set of missing columns from minimal set</p></li>
+<li><p>If checks failed, set of columns with mismatching types.  It is a
+dictionary with the column name as key, and the reference type and
+the actual type in a tuple as value.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s1">&#39;col_x&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;integer&#39;</span><span class="p">,</span> <span class="s1">&#39;number&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;col_y&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;datetime&#39;</span><span class="p">,</span> <span class="s1">&#39;string&#39;</span><span class="p">),</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</li>
+<li><p>If primary keys are different, tuple with the diff.  The first
+element is the index where the two differ, and the two subsequent
+elements are the corresponding elements from the reference and
+dataset primary key list: <code class="docutils literal notranslate"><span class="pre">(index,</span> <span class="pre">ref_col,</span> <span class="pre">dst_col)</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sark.io">
+<span id="internal-interfaces"></span><h1><a class="toc-backref" href="#id5">Internal interfaces</a><a class="headerlink" href="#module-sark.io" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="i-o">
+<h2><a class="toc-backref" href="#id6">I/O</a><a class="headerlink" href="#i-o" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="sark.io.HttpCache">
+<em class="property">class </em><code class="sig-prename descclassname">sark.io.</code><code class="sig-name descname">HttpCache</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">url_t</span><span class="p">:</span> <span class="n">str</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sark/io.html#HttpCache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.io.HttpCache" title="Permalink to this definition">¶</a></dt>
+<dd><p>An HTTP cache</p>
+<p>It accepts a URL template which accepts parameters:
+<code class="docutils literal notranslate"><span class="pre">https://www.example.com/path/{}.json</span></code>, the parameters can be provided
+later at fetch time.  No checks are made if the number of parameters passed
+are compatible with the URL template.</p>
+<p>After fetching a resource, it is cached in a file under
+<code class="docutils literal notranslate"><span class="pre">$TMPDIR/sark-cache/</span></code>.  The file name is of the form
+<code class="docutils literal notranslate"><span class="pre">http-&lt;checksum-of-url-template&gt;-&lt;checksum-of-url&gt;</span></code>.  The cache is
+updated every 24 hours.  A user may also force a cache cleanup by calling
+the <a class="reference internal" href="#sark.io.HttpCache.remove" title="sark.io.HttpCache.remove"><code class="xref py py-meth docutils literal notranslate"><span class="pre">remove()</span></code></a> method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>url_t</strong><span class="classifier">str</span></dt><dd><p>URL template, e.g. <code class="docutils literal notranslate"><span class="pre">https://www.example.com/path/{}.json</span></code></p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Attributes</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>cachedir</strong><span class="classifier">pathlib.Path</span></dt><dd><p>Path object pointing to the cache directory</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sark.io.HttpCache.cachefile" title="sark.io.HttpCache.cachefile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cachefile</span></code></a>(arg, *args)</p></td>
+<td><p>Return the cache file, and the corresponding URL</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sark.io.HttpCache.fetch" title="sark.io.HttpCache.fetch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch</span></code></a>(url)</p></td>
+<td><p>Fetch the URL</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sark.io.HttpCache.get" title="sark.io.HttpCache.get"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get</span></code></a>(arg, *args)</p></td>
+<td><p>Get the URL contents</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#sark.io.HttpCache.remove" title="sark.io.HttpCache.remove"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove</span></code></a>(*args)</p></td>
+<td><p>Remove cache files</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt id="sark.io.HttpCache.cachefile">
+<code class="sig-name descname">cachefile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">str</span></em><span class="sig-paren">)</span> &#x2192; Tuple<span class="p">[</span>pathlib.Path<span class="p">, </span>str<span class="p">]</span><a class="reference internal" href="../_modules/sark/io.html#HttpCache.cachefile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.io.HttpCache.cachefile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the cache file, and the corresponding URL</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>arg</strong><span class="classifier">str</span></dt><dd><p>parameters for the URL template (one mandatory)</p>
+</dd>
+<dt><strong>*args</strong><span class="classifier">str, optional</span></dt><dd><p>more parameters (optional)</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Tuple[pathlib.Path, str]</dt><dd><p>Tuple of Path object pointing to the cache file and the URL string</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="sark.io.HttpCache.fetch">
+<code class="sig-name descname">fetch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">url</span><span class="p">:</span> <span class="n">str</span></em><span class="sig-paren">)</span> &#x2192; bytes<a class="reference internal" href="../_modules/sark/io.html#HttpCache.fetch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.io.HttpCache.fetch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the URL</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>url</strong><span class="classifier">str</span></dt><dd><p>URL to fetch</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>bytes</dt><dd><p>bytes array of the contents that was fetched</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If the URL is incorrect</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="sark.io.HttpCache.get">
+<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">str</span></em><span class="sig-paren">)</span> &#x2192; bytes<a class="reference internal" href="../_modules/sark/io.html#HttpCache.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.io.HttpCache.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the URL contents</p>
+<p>If a valid cache exists, return the contents from there, otherwise
+fetch again.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>arg</strong><span class="classifier">str</span></dt><dd><p>parameters for the URL template (one mandatory)</p>
+</dd>
+<dt><strong>*args</strong><span class="classifier">str, optional</span></dt><dd><p>more parameters (optional)</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>bytes</dt><dd><p>bytes array of the contents</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If the URL is incorrect</p>
+</dd>
+<dt>requests.ConnectionError</dt><dd><p>If there is no network connection</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="sark.io.HttpCache.remove">
+<code class="sig-name descname">remove</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">str</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sark/io.html#HttpCache.remove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.io.HttpCache.remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove cache files</p>
+<ul class="simple">
+<li><p>Remove all files associated with this cache (w/o arguments).</p></li>
+<li><p>Remove only the files associated with the URL formed from the args.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>*args</strong><span class="classifier">str, optional</span></dt><dd><p>parameters for the URL template</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><dl class="simple">
+<dt>FileNotFoundError</dt><dd><p>If an argument is provided to remove a specific cache file, but the
+cache file does not exist.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.io.get_cachedir">
+<code class="sig-prename descclassname">sark.io.</code><code class="sig-name descname">get_cachedir</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; pathlib.Path<a class="reference internal" href="../_modules/sark/io.html#get_cachedir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.io.get_cachedir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the directory <code class="docutils literal notranslate"><span class="pre">$TMPDIR/sark-cache</span></code> and return the Path object</p>
+</dd></dl>
+
+</div>
+<hr class="docutils" />
+<span class="target" id="module-sark.helpers"></span><div class="section" id="helpers">
+<h2><a class="toc-backref" href="#id7">Helpers</a><a class="headerlink" href="#helpers" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="sark.helpers.flatten_list">
+<code class="sig-prename descclassname">sark.helpers.</code><code class="sig-name descname">flatten_list</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lst</span><span class="p">:</span> <span class="n">Iterable</span></em><span class="sig-paren">)</span> &#x2192; Iterable<a class="reference internal" href="../_modules/sark/helpers.html#flatten_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.helpers.flatten_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flatten an arbitrarily nested list (returns a generator)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.helpers.match">
+<code class="sig-prename descclassname">sark.helpers.</code><code class="sig-name descname">match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pattern</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sark/helpers.html#match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.helpers.match" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrap <code class="docutils literal notranslate"><span class="pre">glom.Match</span></code> with the default action set to <code class="docutils literal notranslate"><span class="pre">glom.SKIP</span></code>.</p>
+<p>This is very useful to match items inside nested data structures.  A few
+example uses:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">glom</span> <span class="kn">import</span> <span class="n">glom</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cols</span> <span class="o">=</span> <span class="p">[</span>
+<span class="gp">... </span>    <span class="p">{</span>
+<span class="gp">... </span>        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;abc&quot;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;constraints&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+<span class="gp">... </span>    <span class="p">},</span>
+<span class="gp">... </span>    <span class="p">{</span>
+<span class="gp">... </span>        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;def&quot;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span>
+<span class="gp">... </span>    <span class="p">},</span>
+<span class="gp">... </span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">glom</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="p">[</span><span class="n">match</span><span class="p">({</span><span class="s2">&quot;constraints&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">},</span> <span class="nb">str</span><span class="p">:</span> <span class="nb">str</span><span class="p">})])</span>
+<span class="go">[{&quot;name&quot;: &quot;abc&quot;, &quot;type&quot;: &quot;integer&quot;, &quot;constraints&quot;: {&quot;enum&quot;: []}}]</span>
+</pre></div>
+</div>
+<p>For details see: <a class="reference external" href="https://glom.readthedocs.io/en/latest/matching.html#validation-with-match">glom.Match</a></p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sark.helpers.select">
+<code class="sig-prename descclassname">sark.helpers.</code><code class="sig-name descname">select</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">spec</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sark/helpers.html#select"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sark.helpers.select" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrap <code class="docutils literal notranslate"><span class="pre">glom.Check</span></code> with the default action set to <code class="docutils literal notranslate"><span class="pre">glom.SKIP</span></code>.</p>
+<p>This is very useful to select items inside nested data structures.  A few
+example uses:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">glom</span> <span class="kn">import</span> <span class="n">glom</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cols</span> <span class="o">=</span> <span class="p">[</span>
+<span class="gp">... </span>    <span class="p">{</span>
+<span class="gp">... </span>        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;abc&quot;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span>
+<span class="gp">... </span>    <span class="p">},</span>
+<span class="gp">... </span>    <span class="p">{</span>
+<span class="gp">... </span>        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;def&quot;</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span>
+<span class="gp">... </span>    <span class="p">},</span>
+<span class="gp">... </span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">glom</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="p">[</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">equal_to</span><span class="o">=</span><span class="s2">&quot;abc&quot;</span><span class="p">)])</span>
+<span class="go">[{&quot;name&quot;: &quot;abc&quot;, &quot;type&quot;: &quot;integer&quot;}]</span>
+</pre></div>
+</div>
+<p>For details see: <a class="reference external" href="https://glom.readthedocs.io/en/latest/matching.html#validation-with-check">glom.Check</a></p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">SENTINEL archive</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">The SENTINEL archive data format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hands-on.html">Using a <code class="docutils literal notranslate"><span class="pre">datapackage</span></code> from Python</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/metadata.html#schema">Schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/archive.html">Persistence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial/pandas.html">Reading as a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Metadata tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-sark.dpkg">Datapackage tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-sark.tseries">Time series API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-sark.validate">Validation functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-sark.io">Internal interfaces</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../tutorial/pandas.html" title="previous chapter">Reading as a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, SENTINEL collaboration.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/api/api.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

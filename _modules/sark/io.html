@@ -1,0 +1,303 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sark.io &#8212; SENTINEL archive 0.1.dev0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for sark.io</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">I/O</span>
+<span class="sd">---</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha256</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">overload</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span> <span class="nf">dwim_file</span><span class="p">(</span><span class="n">fpath</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">]:</span>
+    <span class="o">...</span>  <span class="c1"># pragma: no cover, oveload</span>
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span> <span class="nf">dwim_file</span><span class="p">(</span><span class="n">fpath</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="o">...</span>  <span class="c1"># pragma: no cover, oveload</span>
+
+
+<span class="k">def</span> <span class="nf">dwim_file</span><span class="p">(</span><span class="n">fpath</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="s2">&quot;r&quot;</span> <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;w&quot;</span>
+    <span class="k">if</span> <span class="n">fpath</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;.yaml&quot;</span><span class="p">,</span> <span class="s2">&quot;.yml&quot;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">yaml</span><span class="o">.</span><span class="n">safe_dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">stream</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">fpath</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.json&quot;</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fpath</span><span class="si">}</span><span class="s2">: not a JSON or YAML file&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_cachedir"><a class="viewcode-back" href="../../api/api.html#sark.io.get_cachedir">[docs]</a><span class="k">def</span> <span class="nf">get_cachedir</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Create the directory ``$TMPDIR/sark-cache`` and return the Path object&quot;&quot;&quot;</span>
+    <span class="n">cachedir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">gettempdir</span><span class="p">())</span> <span class="o">/</span> <span class="s2">&quot;sark-cache&quot;</span>
+    <span class="n">cachedir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cachedir</span></div>
+
+
+<div class="viewcode-block" id="HttpCache"><a class="viewcode-back" href="../../api/api.html#sark.io.HttpCache">[docs]</a><span class="k">class</span> <span class="nc">HttpCache</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;An HTTP cache</span>
+
+<span class="sd">    It accepts a URL template which accepts parameters:</span>
+<span class="sd">    ``https://www.example.com/path/{}.json``, the parameters can be provided</span>
+<span class="sd">    later at fetch time.  No checks are made if the number of parameters passed</span>
+<span class="sd">    are compatible with the URL template.</span>
+
+<span class="sd">    After fetching a resource, it is cached in a file under</span>
+<span class="sd">    ``$TMPDIR/sark-cache/``.  The file name is of the form</span>
+<span class="sd">    ``http-&lt;checksum-of-url-template&gt;-&lt;checksum-of-url&gt;``.  The cache is</span>
+<span class="sd">    updated every 24 hours.  A user may also force a cache cleanup by calling</span>
+<span class="sd">    the :meth:`remove()` method.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    url_t : str</span>
+<span class="sd">        URL template, e.g. ``https://www.example.com/path/{}.json``</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cachedir : pathlib.Path</span>
+<span class="sd">        Path object pointing to the cache directory</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">cachedir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">get_cachedir</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url_t</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url_t</span> <span class="o">=</span> <span class="n">url_t</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url_t_hex</span> <span class="o">=</span> <span class="n">sha256</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">url_t</span><span class="p">,</span> <span class="s2">&quot;utf8&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+<div class="viewcode-block" id="HttpCache.cachefile"><a class="viewcode-back" href="../../api/api.html#sark.io.HttpCache.cachefile">[docs]</a>    <span class="k">def</span> <span class="nf">cachefile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Return the cache file, and the corresponding URL</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        arg : str</span>
+<span class="sd">            parameters for the URL template (one mandatory)</span>
+<span class="sd">        *args : str, optional</span>
+<span class="sd">            more parameters (optional)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Tuple[pathlib.Path, str]</span>
+<span class="sd">            Tuple of Path object pointing to the cache file and the URL string</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">url_t</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">url_hex</span> <span class="o">=</span> <span class="n">sha256</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="s2">&quot;utf8&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cachedir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;http-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">url_t_hex</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">url_hex</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">url</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="HttpCache.remove"><a class="viewcode-back" href="../../api/api.html#sark.io.HttpCache.remove">[docs]</a>    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove cache files</span>
+
+<span class="sd">        - Remove all files associated with this cache (w/o arguments).</span>
+<span class="sd">        - Remove only the files associated with the URL formed from the args.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        *args : str, optional</span>
+<span class="sd">            parameters for the URL template</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        FileNotFoundError</span>
+<span class="sd">            If an argument is provided to remove a specific cache file, but the</span>
+<span class="sd">            cache file does not exist.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+            <span class="n">files</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cachefile</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)[</span><span class="mi">0</span><span class="p">]])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">files</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cachedir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;http-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">url_t_hex</span><span class="si">}</span><span class="s2">-*&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">cf</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+            <span class="n">cf</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="HttpCache.get"><a class="viewcode-back" href="../../api/api.html#sark.io.HttpCache.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Get the URL contents</span>
+
+<span class="sd">        If a valid cache exists, return the contents from there, otherwise</span>
+<span class="sd">        fetch again.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        arg : str</span>
+<span class="sd">            parameters for the URL template (one mandatory)</span>
+<span class="sd">        *args : str, optional</span>
+<span class="sd">            more parameters (optional)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bytes</span>
+<span class="sd">            bytes array of the contents</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the URL is incorrect</span>
+<span class="sd">        requests.ConnectionError</span>
+<span class="sd">            If there is no network connection</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cachefile</span><span class="p">,</span> <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cachefile</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cachefile</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">cachefile</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_ctime</span> <span class="o">&gt;</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span>
+        <span class="p">):</span>
+            <span class="n">cachefile</span><span class="o">.</span><span class="n">write_bytes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="n">url</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">cachefile</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="HttpCache.fetch"><a class="viewcode-back" href="../../api/api.html#sark.io.HttpCache.fetch">[docs]</a>    <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Fetch the URL</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        url : str</span>
+<span class="sd">            URL to fetch</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bytes</span>
+<span class="sd">            bytes array of the contents that was fetched</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the URL is incorrect</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">ok</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">content</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;error: </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="s2"> responded </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">SENTINEL archive</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">The SENTINEL archive data format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hands-on.html">Using a <code class="docutils literal notranslate"><span class="pre">datapackage</span></code> from Python</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/metadata.html#schema">Schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/archive.html">Persistence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/pandas.html">Reading as a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html">Metadata tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html#module-sark.dpkg">Datapackage tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html#module-sark.tseries">Time series API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html#module-sark.validate">Validation functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html#module-sark.io">Internal interfaces</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, SENTINEL collaboration.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

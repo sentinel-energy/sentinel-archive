@@ -1,0 +1,197 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Metadata &#8212; SENTINEL archive 0.1.dev0 documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Persistence" href="archive.html" />
+    <link rel="prev" title="Using a datapackage from Python" href="../hands-on.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="metadata">
+<h1>Metadata<a class="headerlink" href="#metadata" title="Permalink to this headline">¶</a></h1>
+<p>To create a <code class="docutils literal notranslate"><span class="pre">datapackage.json</span></code> file, you need not write it from
+scratch.  A datapackage can be created within Python with the
+following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sark.dpkg</span> <span class="kn">import</span> <span class="n">create_pkg</span>
+<span class="kn">from</span> <span class="nn">sark.metatools</span> <span class="kn">import</span> <span class="n">get_license</span>
+
+<span class="n">pkg_meta</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;dataset_for_xyz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Dataset for XYZ&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;This dataset is for XYZ and spans 10 years&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;licenses&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">get_license</span><span class="p">(</span><span class="s2">&quot;CC0-1.0&quot;</span><span class="p">)],</span>
+    <span class="s2">&quot;keywords&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;XYZ&quot;</span><span class="p">,</span> <span class="s2">&quot;ABC&quot;</span><span class="p">],</span>
+<span class="p">}</span>
+<span class="n">pkg</span> <span class="o">=</span> <span class="n">create_pkg</span><span class="p">(</span><span class="n">pkg_meta</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.csv&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>In the above snippet the dictionary <code class="docutils literal notranslate"><span class="pre">pkg_meta</span></code> sets the metadata,
+whereas all <em>CSV</em> files in the subdirectory <code class="docutils literal notranslate"><span class="pre">data/</span></code> are added to the
+datapackage as data resources.  As the files are read, a basic
+<em>schema</em> is guessed.  You may inspect the contents of the datapackage
+by looking at <code class="docutils literal notranslate"><span class="pre">pkg.descriptor</span></code>.</p>
+</div>
+<div class="section" id="schema">
+<h1>Schema<a class="headerlink" href="#schema" title="Permalink to this headline">¶</a></h1>
+<p>The schema can be specialised further by updating the metadata for
+each field.  To illustrate with an example, say we have a time series
+dataset called “electricity-consumption”, and the first column in the
+file contains timestamps, or <code class="docutils literal notranslate"><span class="pre">datetime</span></code> values.  The heuristics that
+infers the schema detects the column as a <code class="docutils literal notranslate"><span class="pre">string</span></code> (plain text).  To
+rectify this, we can use the snippet below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sark.dpkg</span> <span class="kn">import</span> <span class="n">update_pkg</span>
+
+<span class="n">update_fields</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;datetime&quot;</span><span class="p">,</span> <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;default&quot;</span><span class="p">},</span>
+<span class="p">}</span>
+<span class="n">success</span> <span class="o">=</span> <span class="n">update_pkg</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="s2">&quot;electricity-consumption&quot;</span><span class="p">),</span> <span class="n">update_fields</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">success</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;successfully updated: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">update_fields</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;failed to update: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">update_fields</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If multiple fields need updating, you only need to add a key
+corresponding to the field in the <code class="docutils literal notranslate"><span class="pre">update_fields</span></code> dictionary; the
+following snippet also updates the “QWE” column such that it is
+interpreted as <code class="docutils literal notranslate"><span class="pre">numbers</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">update_fields</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;datetime&quot;</span><span class="p">,</span> <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;default&quot;</span><span class="p">},</span>
+    <span class="s2">&quot;QWE&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;QWE&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;integer&quot;</span><span class="p">,</span> <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;default&quot;</span><span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="missing-values-primary-keys">
+<h2>Missing values &amp; primary keys<a class="headerlink" href="#missing-values-primary-keys" title="Permalink to this headline">¶</a></h2>
+<p>If for instance there is a need to add to the default list of values
+that are treated as missing values, or to specify a set of fields as
+primary keys, use the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">update</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;primaryKey&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;lvl&quot;</span><span class="p">,</span> <span class="s2">&quot;TRE&quot;</span><span class="p">,</span> <span class="s2">&quot;IUY&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;missingValues&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;nodata&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+<span class="n">success</span> <span class="o">=</span> <span class="n">update_pkg</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="s2">&quot;electricity-consumption&quot;</span><span class="p">),</span> <span class="n">update</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the above example, the fields: “lvl”, “TRE”, and “IUY”, are
+specified as primary keys (used to uniquely identify a row in a
+dataset).  Similarly, the token <code class="docutils literal notranslate"><span class="pre">nodata</span></code> is being added to the list
+of values to be treated as a missing value.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">SENTINEL archive</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">The SENTINEL archive data format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hands-on.html">Using a <code class="docutils literal notranslate"><span class="pre">datapackage</span></code> from Python</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#schema">Schema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#missing-values-primary-keys">Missing values &amp; primary keys</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="archive.html">Persistence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pandas.html">Reading as a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/api.html">Metadata tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/api.html#module-sark.dpkg">Datapackage tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/api.html#module-sark.tseries">Time series API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/api.html#module-sark.validate">Validation functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/api.html#module-sark.io">Internal interfaces</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="../hands-on.html">Using a <code class="docutils literal notranslate"><span class="pre">datapackage</span></code> from Python</a><ul>
+      <li>Previous: <a href="../hands-on.html" title="previous chapter">Using a <code class="docutils literal notranslate"><span class="pre">datapackage</span></code> from Python</a></li>
+      <li>Next: <a href="archive.html" title="next chapter">Persistence</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, SENTINEL collaboration.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/tutorial/metadata.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

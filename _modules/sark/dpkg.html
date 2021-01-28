@@ -1,0 +1,665 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sark.dpkg &#8212; SENTINEL archive 0.1.dev0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for sark.dpkg</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Datapackage&quot;&quot;&quot;</span>
+<span class="c1"># PS: the coincidential module name is intentional ;)</span>
+
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+<span class="kn">from</span> <span class="nn">zipfile</span> <span class="kn">import</span> <span class="n">ZipFile</span>
+
+<span class="kn">from</span> <span class="nn">datapackage</span> <span class="kn">import</span> <span class="n">Package</span>
+<span class="kn">from</span> <span class="nn">glom</span> <span class="kn">import</span> <span class="n">Assign</span><span class="p">,</span> <span class="n">glom</span><span class="p">,</span> <span class="n">Invoke</span><span class="p">,</span> <span class="n">Iter</span><span class="p">,</span> <span class="n">Spec</span><span class="p">,</span> <span class="n">T</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">pkg_resources</span> <span class="kn">import</span> <span class="n">resource_filename</span>
+
+<span class="kn">from</span> <span class="nn">sark.helpers</span> <span class="kn">import</span> <span class="n">match</span><span class="p">,</span> <span class="n">select</span>
+<span class="kn">from</span> <span class="nn">sark.io</span> <span class="kn">import</span> <span class="n">dwim_file</span>
+<span class="kn">from</span> <span class="nn">sark._types</span> <span class="kn">import</span> <span class="n">_path_t</span>
+
+
+<div class="viewcode-block" id="create_pkg"><a class="viewcode-back" href="../../api/api.html#sark.dpkg.create_pkg">[docs]</a><span class="k">def</span> <span class="nf">create_pkg</span><span class="p">(</span><span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">_path_t</span><span class="p">],</span> <span class="n">base_path</span><span class="p">:</span> <span class="n">_path_t</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a datapackage from metadata and resources.</span>
+
+<span class="sd">    If `resources` point to files that exist, their schema are inferred and</span>
+<span class="sd">    added to the package.  If `base_path` is a non empty string, it is treated</span>
+<span class="sd">    as the parent directory, and all resource file paths are checked relative</span>
+<span class="sd">    to it.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    meta : Dict</span>
+<span class="sd">        A dictionary with package metadata.</span>
+
+<span class="sd">    resources : Iterable[Union[str, Path]]</span>
+<span class="sd">        An iterator over different resources.  Resources are paths to files,</span>
+<span class="sd">        relative to `base_path`.</span>
+
+<span class="sd">    base_path : str (default: empty string)</span>
+<span class="sd">        Directory where the package files are located</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Package</span>
+<span class="sd">        A datapackage with inferred schema for all the package resources</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># for an interesting discussion on type hints with unions, see:</span>
+    <span class="c1"># https://stackoverflow.com/q/60235477/289784</span>
+    <span class="n">pkg</span> <span class="o">=</span> <span class="n">Package</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">base_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">base_path</span><span class="p">))</span>
+    <span class="c1"># TODO: filter out and handle non-tabular (custom) data</span>
+    <span class="n">existing</span> <span class="o">=</span> <span class="n">glom</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;resources&quot;</span><span class="p">,</span> <span class="p">[]),</span> <span class="n">Iter</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
+    <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">res</span><span class="p">)</span> <span class="ow">in</span> <span class="n">existing</span><span class="p">:</span>
+            <span class="c1"># list of resources may be paths, but descriptor will always be strings</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>
+            <span class="n">full_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">base_path</span><span class="p">)</span> <span class="o">/</span> <span class="n">res</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">full_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">full_path</span><span class="si">}</span><span class="s2">: skipped, doesn&#39;t exist&quot;</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">pkg</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">res</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover, adding with Dict (undocumented feature)</span>
+            <span class="n">pkg</span><span class="o">.</span><span class="n">add_resource</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pkg</span></div>
+
+
+<div class="viewcode-block" id="read_pkg"><a class="viewcode-back" href="../../api/api.html#sark.dpkg.read_pkg">[docs]</a><span class="k">def</span> <span class="nf">read_pkg</span><span class="p">(</span><span class="n">pkg_path</span><span class="p">:</span> <span class="n">_path_t</span><span class="p">,</span> <span class="n">extract_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">_path_t</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read a  datapackage</span>
+
+<span class="sd">    If `pkg_path` points to a `datapackage.json` file, read it as is.  If it</span>
+<span class="sd">    points to a zip archive.  The archive is first extracted before opening it.</span>
+<span class="sd">    If `extract_dir` is not provided, the current directory of the zip archive</span>
+<span class="sd">    is used.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pkg_path : Union[str, Path]</span>
+<span class="sd">        Path to the `datapackage.json` file, or a zip archive</span>
+
+<span class="sd">    extract_dir : Union[str, Path]</span>
+<span class="sd">        Path to which the zip archive is extracted</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Package</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pkg_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">pkg_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pkg_path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.json&quot;</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pkg_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">pkg_json</span><span class="p">:</span>
+            <span class="n">base_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Path</span><span class="p">(</span><span class="n">pkg_path</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">return</span> <span class="n">Package</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">pkg_json</span><span class="p">),</span> <span class="n">base_path</span><span class="o">=</span><span class="n">base_path</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">pkg_path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.zip&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">extract_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">extract_dir</span> <span class="o">=</span> <span class="n">pkg_path</span><span class="o">.</span><span class="n">parent</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">extract_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">extract_dir</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">ZipFile</span><span class="p">(</span><span class="n">pkg_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">pkg_zip</span><span class="p">:</span>
+            <span class="n">pkg_zip</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">extract_dir</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">extract_dir</span> <span class="o">/</span> <span class="s2">&quot;datapackage.json&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">pkg_json</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">Package</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">pkg_json</span><span class="p">),</span> <span class="n">base_path</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">extract_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">pkg_path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pkg_path</span> <span class="o">/</span> <span class="s2">&quot;datapackage.json&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">pkg_json</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Package</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">pkg_json</span><span class="p">),</span> <span class="n">base_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">pkg_path</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pkg_path</span><span class="si">}</span><span class="s2">: expecting a JSON or ZIP file&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="update_pkg"><a class="viewcode-back" href="../../api/api.html#sark.dpkg.update_pkg">[docs]</a><span class="k">def</span> <span class="nf">update_pkg</span><span class="p">(</span><span class="n">pkg</span><span class="p">:</span> <span class="n">Package</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">schema_update</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Update package resource schema</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pkg : Package</span>
+<span class="sd">        Package object</span>
+
+<span class="sd">    resource : str</span>
+<span class="sd">        Resource name FIXME: cannot handle duplicate names in subdirectories</span>
+
+<span class="sd">    schema_update : Dict</span>
+<span class="sd">        Updated fields in the schema, if `field` is `False`, can be used to</span>
+<span class="sd">        update `missingValues`, or `primaryKey`.  When updating the schema, it</span>
+<span class="sd">        looks like this (&#39;foo&#39;/&#39;bar&#39; are names of the fields being updated)::</span>
+
+<span class="sd">          {</span>
+<span class="sd">              &quot;foo&quot;: {</span>
+<span class="sd">                  &quot;name&quot;: &quot;foo&quot;,</span>
+<span class="sd">                  &quot;type&quot;: &quot;datetime&quot;,</span>
+<span class="sd">                  &quot;format&quot;: &quot;default&quot;</span>
+<span class="sd">              },</span>
+<span class="sd">              &quot;bar&quot;: {</span>
+<span class="sd">                  &quot;name&quot;: &quot;bar&quot;,</span>
+<span class="sd">                  &quot;type&quot;: &quot;integer&quot;,</span>
+<span class="sd">                  &quot;format&quot;: &quot;default&quot;</span>
+<span class="sd">              }</span>
+<span class="sd">          }</span>
+
+<span class="sd">    fields : bool (default: True)</span>
+<span class="sd">        If the schema update is a field, or not</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool</span>
+<span class="sd">        Return the `Package.valid` flag; `True` if the update was valid.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">descriptor</span>
+    <span class="k">assert</span> <span class="s2">&quot;resources&quot;</span> <span class="ow">in</span> <span class="n">desc</span><span class="p">,</span> <span class="s2">&quot;Package should have at least one resource&quot;</span>
+    <span class="n">res</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="p">[</span><span class="n">res</span> <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">desc</span><span class="p">[</span><span class="s2">&quot;resources&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">res</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">resource</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">fields</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">res</span><span class="p">[</span><span class="s2">&quot;schema&quot;</span><span class="p">][</span><span class="s2">&quot;fields&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">field</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">schema_update</span><span class="p">:</span>
+                <span class="n">field</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">schema_update</span><span class="p">[</span><span class="n">field</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># FIXME: do the following checks w/o asserts</span>
+        <span class="k">assert</span> <span class="s2">&quot;fields&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">schema_update</span><span class="p">,</span> <span class="s2">&quot;cannot add fields to schema&quot;</span>
+        <span class="c1"># prevents from adding additional keys</span>
+        <span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">schema_update</span><span class="p">)</span> <span class="o">-</span> <span class="p">{</span><span class="s2">&quot;primaryKey&quot;</span><span class="p">,</span> <span class="s2">&quot;missingValues&quot;</span><span class="p">}</span> <span class="o">==</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">res</span><span class="p">[</span><span class="s2">&quot;schema&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">schema_update</span><span class="p">)</span>
+    <span class="n">pkg</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">pkg</span><span class="o">.</span><span class="n">valid</span></div>
+
+
+<div class="viewcode-block" id="read_pkg_index"><a class="viewcode-back" href="../../api/api.html#sark.dpkg.read_pkg_index">[docs]</a><span class="k">def</span> <span class="nf">read_pkg_index</span><span class="p">(</span><span class="n">fpath</span><span class="p">:</span> <span class="n">_path_t</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Read the index of files incuded in the datapackage</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fpath : Union[str, Path]</span>
+<span class="sd">        Index file path or a stream object</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pd.DataFrame</span>
+<span class="sd">        A dataframe with the columns: &#39;file&#39;, &#39;name&#39;, and &#39;idxcols&#39;; &#39;idxcols&#39;</span>
+<span class="sd">        is a tuple.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the file type is correct (YAML/JSON), but does not return a list</span>
+<span class="sd">    RuntimeError</span>
+<span class="sd">        If the file has an unknown extension (raised by :func:`sark.io.dwim_file`)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">dwim_file</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">fpath</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">fpath</span><span class="si">}</span><span class="s2">: bad index file&quot;</span><span class="p">)</span>
+
+    <span class="c1"># # convert list (idxcols) into tuples, easier to query in DataFrame</span>
+    <span class="c1"># glom(idx, [Assign(&quot;idxcols&quot;, Spec((T[&quot;idxcols&quot;], tuple)))])</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span></div>
+
+
+<span class="c1"># FIXME: can&#39;t use Literal until we drop 3.7</span>
+<div class="viewcode-block" id="registry"><a class="viewcode-back" href="../../api/api.html#sark.dpkg.registry">[docs]</a><span class="k">def</span> <span class="nf">registry</span><span class="p">(</span><span class="n">col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">col_t</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Retrieve the column schema from column schema registry: `sark_registry`</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    col : str</span>
+<span class="sd">        Column name to look for</span>
+
+<span class="sd">    col_t : Literal[&quot;cols&quot;, &quot;idxcols&quot;]</span>
+<span class="sd">        A literal string specifying the kind of column; one of: &quot;cols&quot;, or &quot;idxcols&quot;</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Dict</span>
+<span class="sd">        Column schema; an empty dictionary is returned in case there are no matches</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    RuntimeError</span>
+<span class="sd">        When more than one matches are found</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        When the schema file in the registry is unsupported; not one of: JSON, or YAML</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">col_t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;cols&quot;</span><span class="p">,</span> <span class="s2">&quot;idxcols&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">col_t</span><span class="si">}</span><span class="s2">: unknown column type&quot;</span><span class="p">)</span>
+
+    <span class="n">curdir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">resource_filename</span><span class="p">(</span><span class="s2">&quot;sark_registry&quot;</span><span class="p">,</span> <span class="n">col_t</span><span class="p">))</span>
+    <span class="n">schema</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+        <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">curdir</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">fmt</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">fmt</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;json&quot;</span><span class="p">,</span> <span class="s2">&quot;yaml&quot;</span><span class="p">))</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2">: not in registry&quot;</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{}</span>  <span class="c1"># no match, unregistered column</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># pragma: no cover, bad registry</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">schema</span><span class="si">}</span><span class="s2">: multiple matches, duplicates in registry&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Dict</span><span class="p">,</span> <span class="n">dwim_file</span><span class="p">(</span><span class="n">curdir</span> <span class="o">/</span> <span class="n">schema</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span></div>
+
+
+<div class="viewcode-block" id="index_levels"><a class="viewcode-back" href="../../api/api.html#sark.dpkg.index_levels">[docs]</a><span class="k">def</span> <span class="nf">index_levels</span><span class="p">(</span><span class="n">_file</span><span class="p">:</span> <span class="n">_path_t</span><span class="p">,</span> <span class="n">idxcols</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">_path_t</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Read a dataset and determine the index levels</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _file : Union[str, Path]</span>
+<span class="sd">        Path to the dataset</span>
+
+<span class="sd">    idxcols : Iterable[str]</span>
+<span class="sd">        List of columns in the dataset that constitute the index</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple[str, Dict]</span>
+
+<span class="sd">        Tuple of path to the dataset, and the schema of each column as a dictionary.</span>
+<span class="sd">        If `idxcols` was [&quot;foo&quot;, &quot;bar&quot;], the dictionary might look like::</span>
+
+<span class="sd">          {</span>
+<span class="sd">              &quot;foo&quot;: {</span>
+<span class="sd">                  &quot;name&quot;: &quot;foo&quot;,</span>
+<span class="sd">                  &quot;type&quot;: &quot;datetime&quot;,</span>
+<span class="sd">                  &quot;format&quot;: &quot;default&quot;</span>
+<span class="sd">              },</span>
+<span class="sd">              &quot;bar&quot;: {</span>
+<span class="sd">                  &quot;name&quot;: &quot;bar&quot;,</span>
+<span class="sd">                  &quot;type&quot;: &quot;string&quot;,</span>
+<span class="sd">                  &quot;constraints&quot;: {</span>
+<span class="sd">                      &quot;enum&quot;: [&quot;a&quot;, &quot;b&quot;]</span>
+<span class="sd">                  }</span>
+<span class="sd">              }</span>
+<span class="sd">          }</span>
+
+<span class="sd">        Note that the index columns that have categorical values, are filled in</span>
+<span class="sd">        by reading the dataset and determining the full set of values.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">coldict</span> <span class="o">=</span> <span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="n">registry</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="s2">&quot;idxcols&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">idxcols</span><span class="p">}</span>
+    <span class="c1"># select columns with an enum constraint where the enum values are empty</span>
+    <span class="n">select_cols</span> <span class="o">=</span> <span class="n">match</span><span class="p">({</span><span class="s2">&quot;constraints&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="p">[]},</span> <span class="nb">str</span><span class="p">:</span> <span class="nb">str</span><span class="p">})</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="n">glom</span><span class="p">(</span><span class="n">coldict</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">Iter</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">select_cols</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">_file</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="n">cols</span><span class="p">)</span><span class="o">.</span><span class="n">index</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="p">):</span>
+        <span class="n">levels</span> <span class="o">=</span> <span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">lvls</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">lvls</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">idx</span><span class="o">.</span><span class="n">names</span><span class="p">,</span> <span class="n">idx</span><span class="o">.</span><span class="n">levels</span><span class="p">)}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">levels</span> <span class="o">=</span> <span class="p">{</span><span class="n">idx</span><span class="o">.</span><span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="nb">list</span><span class="p">(</span><span class="n">idx</span><span class="o">.</span><span class="n">unique</span><span class="p">())}</span>
+    <span class="n">enum_vals</span> <span class="o">=</span> <span class="n">Spec</span><span class="p">(</span><span class="n">Invoke</span><span class="p">(</span><span class="n">levels</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">)</span><span class="o">.</span><span class="n">specs</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">))</span>
+    <span class="n">glom</span><span class="p">(</span>
+        <span class="n">coldict</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span>
+        <span class="n">Iter</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">select_cols</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">Assign</span><span class="p">(</span><span class="s2">&quot;constraints.enum&quot;</span><span class="p">,</span> <span class="n">enum_vals</span><span class="p">))</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">_file</span><span class="p">,</span> <span class="n">coldict</span></div>
+
+
+<div class="viewcode-block" id="pkg_from_index"><a class="viewcode-back" href="../../api/api.html#sark.dpkg.pkg_from_index">[docs]</a><span class="k">def</span> <span class="nf">pkg_from_index</span><span class="p">(</span><span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">fpath</span><span class="p">:</span> <span class="n">_path_t</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="n">Package</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Read an index file, and create a datapackage with the provided metadata.</span>
+
+<span class="sd">    The index can be in either YAML, or JSON format.  It is a list of dataset</span>
+<span class="sd">    files, names, and a list of columns in the dataset that are to be treated</span>
+<span class="sd">    as index columns (see example below)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    meta : Dict</span>
+<span class="sd">        Package metadata dictionary</span>
+
+<span class="sd">    fpath : Union[str, Path]</span>
+<span class="sd">        Path to the index file.  Note the index file has to be at the top level</span>
+<span class="sd">        directory of the datapackage.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple[Path, Package, pandas.DataFrame]</span>
+<span class="sd">        The package directory, the `Package` object, and the index dataframe.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    YAML::</span>
+
+<span class="sd">        &gt;&gt;&gt; yaml_f = &#39;&#39;&#39;</span>
+<span class="sd">        ... - file: file1</span>
+<span class="sd">        ...   name: dst1</span>
+<span class="sd">        ...   idxcols: [cola, colb]</span>
+<span class="sd">        ... - file: file2</span>
+<span class="sd">        ...   name: dst2</span>
+<span class="sd">        ...   idxcols: [colx, coly, colz]</span>
+<span class="sd">        ... - file: file3</span>
+<span class="sd">        ...   name: dst3</span>
+<span class="sd">        ...   idxcols: [col]</span>
+<span class="sd">        ... &#39;&#39;&#39;</span>
+
+<span class="sd">    JSON::</span>
+
+<span class="sd">        &gt;&gt;&gt; json_f = &#39;&#39;&#39;</span>
+<span class="sd">        ... [</span>
+<span class="sd">        ...     {</span>
+<span class="sd">        ...         &quot;file&quot;: &quot;file1&quot;,</span>
+<span class="sd">        ...         &quot;name&quot;: &quot;dst1&quot;,</span>
+<span class="sd">        ...         &quot;idxcols&quot;: [</span>
+<span class="sd">        ...             &quot;cola&quot;,</span>
+<span class="sd">        ...             &quot;colb&quot;</span>
+<span class="sd">        ...         ]</span>
+<span class="sd">        ...     },</span>
+<span class="sd">        ...     {</span>
+<span class="sd">        ...         &quot;file&quot;: &quot;file2&quot;,</span>
+<span class="sd">        ...         &quot;name&quot;: &quot;dst2&quot;,</span>
+<span class="sd">        ...         &quot;idxcols&quot;: [</span>
+<span class="sd">        ...             &quot;colx&quot;,</span>
+<span class="sd">        ...             &quot;coly&quot;,</span>
+<span class="sd">        ...             &quot;colz&quot;</span>
+<span class="sd">        ...         ]</span>
+<span class="sd">        ...     },</span>
+<span class="sd">        ...     {</span>
+<span class="sd">        ...         &quot;file&quot;: &quot;file3&quot;,</span>
+<span class="sd">        ...         &quot;name&quot;: &quot;dst3&quot;,</span>
+<span class="sd">        ...         &quot;idxcols&quot;: [</span>
+<span class="sd">        ...             &quot;col&quot;</span>
+<span class="sd">        ...         ]</span>
+<span class="sd">        ...     }</span>
+<span class="sd">        ... ]</span>
+<span class="sd">        ... &#39;&#39;&#39;</span>
+
+<span class="sd">    Index as read from the example above::</span>
+
+<span class="sd">        &gt;&gt;&gt; idx = read_pkg_index(&quot;testing/files/indices/index.json&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; idx</span>
+<span class="sd">             file  name             idxcols</span>
+<span class="sd">        0   file1  dst1        (cola, colb)</span>
+<span class="sd">        1   file2  dst2  (colx, coly, colz)</span>
+<span class="sd">        2   file3  dst3              (col,)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pkg_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">fpath</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">read_pkg_index</span><span class="p">(</span><span class="n">fpath</span><span class="p">)</span>
+    <span class="n">pkg</span> <span class="o">=</span> <span class="n">create_pkg</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">idx</span><span class="p">[</span><span class="s2">&quot;file&quot;</span><span class="p">],</span> <span class="n">base_path</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pkg_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">idx</span><span class="o">.</span><span class="n">to_records</span><span class="p">():</span>
+        <span class="n">resource_name</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">update</span> <span class="o">=</span> <span class="n">index_levels</span><span class="p">(</span><span class="n">pkg_dir</span> <span class="o">/</span> <span class="n">entry</span><span class="o">.</span><span class="n">file</span><span class="p">,</span> <span class="n">entry</span><span class="o">.</span><span class="n">idxcols</span><span class="p">)</span>
+        <span class="n">update_pkg</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">resource_name</span><span class="p">,</span> <span class="n">update</span><span class="p">)</span>
+        <span class="n">update_pkg</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">resource_name</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;primaryKey&quot;</span><span class="p">:</span> <span class="n">entry</span><span class="o">.</span><span class="n">idxcols</span><span class="p">},</span> <span class="n">fields</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="c1"># set of value columns</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">glom</span><span class="p">(</span>
+                <span class="n">pkg</span><span class="o">.</span><span class="n">descriptor</span><span class="p">,</span>
+                <span class="p">(</span>
+                    <span class="s2">&quot;resources&quot;</span><span class="p">,</span>
+                    <span class="n">Iter</span><span class="p">()</span>
+                    <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="n">equal_to</span><span class="o">=</span><span class="n">entry</span><span class="o">.</span><span class="n">file</span><span class="p">))</span>
+                    <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="s2">&quot;schema.fields&quot;</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+                    <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">all</span><span class="p">(),</span>
+                    <span class="nb">set</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">idxcols</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">update_pkg</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">resource_name</span><span class="p">,</span> <span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="n">registry</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="s2">&quot;cols&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">pkg_dir</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">idx</span></div>
+
+
+<div class="viewcode-block" id="pkg_glossary"><a class="viewcode-back" href="../../api/api.html#sark.dpkg.pkg_glossary">[docs]</a><span class="k">def</span> <span class="nf">pkg_glossary</span><span class="p">(</span><span class="n">pkg</span><span class="p">:</span> <span class="n">Package</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generate glossary from the package and the package index.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pkg : Package</span>
+
+<span class="sd">    idx : pd.DataFrame</span>
+<span class="sd">        The index dataframe</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pd.DataFrame</span>
+<span class="sd">        The glossary as dataframe</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_levels</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="n">glom</span><span class="p">(</span>
+        <span class="n">pkg</span><span class="o">.</span><span class="n">descriptor</span><span class="p">,</span>
+        <span class="p">(</span>
+            <span class="s2">&quot;resources&quot;</span><span class="p">,</span>
+            <span class="n">Iter</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="n">equal_to</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;file&quot;</span><span class="p">]))</span>
+            <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="s2">&quot;schema.fields&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">match</span><span class="p">({</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;idxcols&quot;</span><span class="p">],</span> <span class="s2">&quot;constraints&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">},</span> <span class="nb">str</span><span class="p">:</span> <span class="nb">str</span><span class="p">})</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="s2">&quot;constraints.enum&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">all</span><span class="p">(),</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">glossary</span> <span class="o">=</span> <span class="n">idx</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="s2">&quot;idxcols&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">glossary</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">glossary</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">_levels</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="pkg_from_files"><a class="viewcode-back" href="../../api/api.html#sark.dpkg.pkg_from_files">[docs]</a><span class="k">def</span> <span class="nf">pkg_from_files</span><span class="p">(</span><span class="n">meta</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">idxpath</span><span class="p">:</span> <span class="n">_path_t</span><span class="p">,</span> <span class="n">fpaths</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">_path_t</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;Create a package from an index file and other files</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    meta : Dict</span>
+<span class="sd">        A dictionary with package metadata.</span>
+
+<span class="sd">    idxpath : Union[str, Path]</span>
+<span class="sd">        Path to the index file.  Note the index file has to be at the top level</span>
+<span class="sd">        directory of the datapackage.  See :func:`sark.dpkg.read_pkg_index`</span>
+
+<span class="sd">    fpaths : List[Union[str, Path]]</span>
+<span class="sd">        A list of paths to datasets/resources not in the index.  If any of the</span>
+<span class="sd">        paths point to a dataset already present in the index, it is ignored.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Tuple[Path, Package, pd.DataFrame]</span>
+<span class="sd">        A datapackage with inferred schema for the resources/datasets present</span>
+<span class="sd">        in the index; all other resources are added with a basic inferred</span>
+<span class="sd">        schema.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pkgdir</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">pkg_from_index</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">idxpath</span><span class="p">)</span>
+    <span class="n">idx_fpath</span> <span class="o">=</span> <span class="n">idx</span><span class="p">[</span><span class="s2">&quot;file&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">pkgdir</span> <span class="o">/</span> <span class="n">f</span><span class="p">)</span>  <span class="c1"># convert to full path</span>
+    <span class="n">_fpaths</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">_p1</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">pkgdir</span><span class="p">)</span>  <span class="c1"># convert path to relative to pkgdir</span>
+        <span class="k">for</span> <span class="n">_p1</span> <span class="ow">in</span> <span class="nb">filter</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">_p2</span><span class="p">:</span> <span class="ow">not</span> <span class="n">idx_fpath</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">_p2</span><span class="o">.</span><span class="n">samefile</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span> <span class="nb">map</span><span class="p">(</span><span class="n">Path</span><span class="p">,</span> <span class="n">fpaths</span><span class="p">)</span>
+        <span class="p">)</span>  <span class="c1"># accept only if not in index</span>
+    <span class="p">]</span>
+    <span class="n">pkg</span> <span class="o">=</span> <span class="n">create_pkg</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">_fpaths</span><span class="p">,</span> <span class="n">base_path</span><span class="o">=</span><span class="n">pkgdir</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pkgdir</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">idx</span></div>
+
+
+<div class="viewcode-block" id="idxpath_from_pkgpath"><a class="viewcode-back" href="../../api/api.html#sark.dpkg.idxpath_from_pkgpath">[docs]</a><span class="k">def</span> <span class="nf">idxpath_from_pkgpath</span><span class="p">(</span><span class="n">pkgpath</span><span class="p">:</span> <span class="n">_path_t</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_path_t</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Return a valid index path given a package path</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pkgpath : Union[str, Path]</span>
+<span class="sd">        Path to package directory</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Union[str, Path]</span>
+<span class="sd">        - Returns a valid index path; if there are multiple matches, returns</span>
+<span class="sd">          the lexicographically first match</span>
+<span class="sd">        - If an index file is not found, returns an empty string</span>
+
+<span class="sd">    Warnings</span>
+<span class="sd">    --------</span>
+<span class="sd">    RuntimeWarning</span>
+<span class="sd">        - Warns if no index file is not found</span>
+<span class="sd">        - Warns if multiple index files are found</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pkgpath</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">pkgpath</span><span class="p">)</span>
+    <span class="n">idxpath</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">p</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">pkgpath</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;index.*&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;.yaml&quot;</span><span class="p">,</span> <span class="s2">&quot;.yml&quot;</span><span class="p">,</span> <span class="s2">&quot;.json&quot;</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">idxpath</span><span class="p">:</span>
+        <span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pkgpath</span><span class="si">}</span><span class="s2">: no index file found&quot;</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">idxpath</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;multiple indices: </span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">idxpath</span><span class="p">))</span><span class="si">}</span><span class="s2">, using </span><span class="si">{</span><span class="n">idxpath</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="ne">RuntimeWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">idxpath</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="write_pkg"><a class="viewcode-back" href="../../api/api.html#sark.dpkg.write_pkg">[docs]</a><span class="k">def</span> <span class="nf">write_pkg</span><span class="p">(</span>
+    <span class="n">pkg</span><span class="p">:</span> <span class="n">Package</span><span class="p">,</span>
+    <span class="n">pkgdir</span><span class="p">:</span> <span class="n">_path_t</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">idx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">glossary</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Write a data package to path</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pkg: Package</span>
+<span class="sd">        Package object</span>
+
+<span class="sd">    pkgdir: Union[str, Path]</span>
+<span class="sd">        Path to write to</span>
+
+<span class="sd">    idx : pandas.DataFrame (optional)</span>
+<span class="sd">        Package index written to `pkgdir/index.json`</span>
+
+<span class="sd">    glossary : pandas.DataFrame (optional)</span>
+<span class="sd">        Package glossary written to `pkgdir/glossary.json`</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    List[Path]</span>
+<span class="sd">        List of files written to disk</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pkgdir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">pkgdir</span><span class="p">)</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">pkgdir</span> <span class="o">/</span> <span class="s2">&quot;datapackage.json&quot;</span><span class="p">]</span>
+    <span class="n">dwim_file</span><span class="p">(</span><span class="n">files</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">pkg</span><span class="o">.</span><span class="n">descriptor</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pkgdir</span> <span class="o">/</span> <span class="s2">&quot;index.json&quot;</span><span class="p">)</span>
+        <span class="n">dwim_file</span><span class="p">(</span><span class="n">files</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">idx</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;records&quot;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">glossary</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pkgdir</span> <span class="o">/</span> <span class="s2">&quot;glossary.json&quot;</span><span class="p">)</span>
+        <span class="n">dwim_file</span><span class="p">(</span><span class="n">files</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">glossary</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;records&quot;</span><span class="p">))</span>
+
+    <span class="c1"># TODO: support saving to archives (zip, tar, etc)</span>
+    <span class="k">return</span> <span class="n">files</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">SENTINEL archive</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../overview.html">The SENTINEL archive data format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hands-on.html">Using a <code class="docutils literal notranslate"><span class="pre">datapackage</span></code> from Python</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/metadata.html">Metadata</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/metadata.html#schema">Schema</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/archive.html">Persistence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/pandas.html">Reading as a <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html">Metadata tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html#module-sark.dpkg">Datapackage tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html#module-sark.tseries">Time series API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html#module-sark.validate">Validation functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/api.html#module-sark.io">Internal interfaces</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, SENTINEL collaboration.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
